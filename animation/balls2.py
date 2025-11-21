@@ -54,20 +54,20 @@ class Simulation:
         if current_bottom < self.water_level:
             # Правильная физика: F = ma, ускорение постоянно
             ball.a = ball.g
-            ball.v += ball.a * self.config['speeds']['time_step']   #+ball.m*0.01
+            ball.v += ball.a * self.config['speeds']['time_step']  #+ball.m*0.01
             ball.y += ball.v
         else:
             ball.phase = 'water'
 
     def update_water(self, ball, current_y):
         if current_y < self.ground_level:
-            ball.v+=ball.g*0.1
-            if ball.r<20:
+            ball.v += ball.g * 0.1
+            if ball.r < 20:
                 water_resistance = ball.water_resistance_coef * ball.m * ball.r
             else:
-                water_resistance= ball.water_resistance_coef*ball.m*ball.r*0.5
+                water_resistance = ball.water_resistance_coef * ball.m * ball.r * 0.5
             if ball.v > 0:
-                ball.v -= water_resistance*0.001
+                ball.v -= water_resistance * 0.001
             else:
                 ball.v += water_resistance * 0.005
             ball.y += ball.v
@@ -78,14 +78,14 @@ class Simulation:
     def update_bounce1(self, ball):
         bounce_height = ball.m * 0.003 * self.config['behavior']['bounce_height']
         if ball.y > self.ground_level - ball.r - bounce_height:
-            ball.v = -ball.v * self.config['behavior']['bounce_coef']*0.5  # Коэффициент отскока
+            ball.v = -ball.v * self.config['behavior']['bounce_coef'] * 0.5  # Коэффициент отскока
             ball.y += ball.v
         else:
             ball.phase = 'bounce2'
 
     def update_bounce2(self, ball, current_bottom):
         if current_bottom < self.ground_level:
-            ball.v += ball.g*0.05
+            ball.v += ball.g * 0.05
             ball.y += ball.v
         else:
             ball.y = self.ground_level - ball.r
@@ -97,7 +97,6 @@ class Simulation:
         else:
             ball.y = self.ground_level - ball.r
             ball.is_moving = False
-
 
     def all_balls_stopped(self):
         """Проверяет, все ли шары остановили движение"""
@@ -128,7 +127,8 @@ class Graphics:
             y2 = ball.y + ball.r
 
             ball_id = self.canv.create_oval(x1, y1, x2, y2, fill=ball.color,
-                                            outline=self.simulation.config['colors']['oval_outline'], activefill=self.simulation.config['colors']['oval_activeclick'], width=2)
+                                            outline=self.simulation.config['colors']['oval_outline'],
+                                            activefill=self.simulation.config['colors']['oval_activeclick'], width=2)
             self.ball_ids.append(ball_id)
 
 
@@ -141,7 +141,7 @@ class Manager:
         self.simulation = Simulation(config)
         self.graphics = Graphics(self.root, self.simulation)
 
-        self.simulation.add_ball(100, 20, 10, 0.1, color='pink2')
+        self.simulation.add_ball(20, 20, 10, 0.1, color='pink2')
         self.simulation.add_ball(200, 20, 10, 120, color='pink2')
         self.simulation.add_ball(300, 20, 20, 3, color='pink2')
         self.simulation.add_ball(350, 20, 10, 100, color='pink2')
@@ -171,5 +171,3 @@ class Manager:
 if __name__ == '__main__':
     manager = Manager()
     manager.run()
-
-
