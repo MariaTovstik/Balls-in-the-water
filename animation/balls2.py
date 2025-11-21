@@ -51,15 +51,17 @@ class Simulation:
                 self.update_stopping(ball)
 
     def update_falling(self, ball, current_bottom):
+        ''' Фаза падения шара в воду'''
         if current_bottom < self.water_level:
-            # Правильная физика: F = ma, ускорение постоянно
+            # F = ma, ускорение постоянно
             ball.a = ball.g
-            ball.v += ball.a * self.config['speeds']['time_step']   #+ball.m*0.01
+            ball.v += ball.a * self.config['speeds']['time_step'] 
             ball.y += ball.v
         else:
             ball.phase = 'water'
 
     def update_water(self, ball, current_y):
+        '''Фаза прохождения шара через воду. Функция изменяет координаты шара учтиывая действие силы сопротивления и силы тяжести'''
         if current_y < self.ground_level:
             ball.v+=ball.g*0.1
             if ball.r<20:
@@ -76,6 +78,7 @@ class Simulation:
             ball.phase = 'bounce1'
 
     def update_bounce1(self, ball):
+        '''Функция изменяет координаты шара при касании дна и отскоке, переводит анимацию в фазу повторного падения'''
         bounce_height = ball.m * 0.003 * self.config['behavior']['bounce_height']
         if ball.y > self.ground_level - ball.r - bounce_height:
             ball.v = -ball.v * self.config['behavior']['bounce_coef']*0.5  # Коэффициент отскока
@@ -84,6 +87,7 @@ class Simulation:
             ball.phase = 'bounce2'
 
     def update_bounce2(self, ball, current_bottom):
+        '''Функция моделирует повторное падение на дно и переводит анимацию в фазу остановки движения'''
         if current_bottom < self.ground_level:
             ball.v += ball.g*0.05
             ball.y += ball.v
@@ -92,6 +96,7 @@ class Simulation:
             ball.phase = 'stopping'
 
     def update_stopping(self, ball):
+        '''Фаза завершения движения'''
         if ball.y < self.ground_level - ball.r:
             ball.y += 0.1
         else:
@@ -100,7 +105,7 @@ class Simulation:
 
 
     def all_balls_stopped(self):
-        """Проверяет, все ли шары остановили движение"""
+        '''Проверяет, все ли шары остановили движение'''
         return all(not ball.is_moving for ball in self.balls)
 
 
@@ -117,6 +122,7 @@ class Graphics:
         self.ball_ids = []
 
     def draw(self):
+        '''Графическое изображение шаров'''
         for ball_id in self.ball_ids:
             self.canv.delete(ball_id)
         self.ball_ids.clear()
@@ -152,6 +158,7 @@ class Manager:
         self.game_loop()
 
     def game_loop(self):
+        '''Запуск анимации и завершение'''
         if self.running and not self.simulation.all_balls_stopped():
             self.simulation.update()
             self.graphics.draw()
@@ -160,7 +167,6 @@ class Manager:
             self.root.destroy()
 
     def escape(self):
-        pass
         self.running = False
         self.root.destroy()
 
