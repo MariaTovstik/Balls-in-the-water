@@ -1,0 +1,26 @@
+{
+  "width": 400,
+  "height": 400,
+  "colors": {
+    "bg": "seashell1",
+    "water": "DodgerBlue4",
+    "water_activefill": "DodgerBlue4",
+    "ball_outline": "pink",
+    "oval_outline": "pink",
+    "oval_activeclick": "DeepPink4"
+  },
+  "speeds": {
+    "animation": 60,
+    "initial_velocity": 4,
+    "gravity": 0.5,
+    "time_step": 0.1
+  },
+  "behavior": {
+    "bounce_height": 30,
+    "bounce_height_2": 20,
+    "archimed_coeff" : 0.01,
+    "water_resistance": 0.8,
+    "buoyancy": 0.3,
+    "bounce_coef": 0.7
+  }
+}
