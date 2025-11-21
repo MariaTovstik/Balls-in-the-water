@@ -40,15 +40,15 @@ class Simulation:
             if not ball.is_moving:
                 continue
             current_bottom = ball.y + ball.r
-            if ball.phase == 'falling':
+            if ball.phase == 'falling':#фаза падения в воздухе
                 self.update_falling(ball, current_bottom)
-            elif ball.phase == 'water':
+            elif ball.phase == 'water':#фаза падения в воде
                 self.update_water(ball, current_bottom)
-            elif ball.phase == 'bounce1':
+            elif ball.phase == 'bounce1':#фаза отскока 1
                 self.update_bounce1(ball)
-            elif ball.phase == 'bounce2':
+            elif ball.phase == 'bounce2':#фаза отскока 2
                 self.update_bounce2(ball, current_bottom)
-            elif ball.phase == 'stopping':
+            elif ball.phase == 'stopping':#остановка
                 self.update_stopping(ball)
 
     def update_falling(self, ball, current_bottom):
