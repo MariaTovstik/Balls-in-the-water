@@ -4,16 +4,16 @@ import json
 
 class Ball:
     def __init__(self, simulation, x, y, r, m, color='pink2'):
-        self.simulation = simulation# ссылка на родительскую симуляцию
+        self.simulation = simulation  # ссылка на родительскую симуляцию
         self.config = simulation.config
         self.x = x
         self.y = y
-        self.r = r  #радиус шара
-        self.m = m  #масса
+        self.r = r  # радиус шара
+        self.m = m  # масса
         self.v = 0  # Начинаем с нулевой скорости
         self.a = 0  # Ускорение
-        self.g = self.config['speeds']['gravity']  #ускорение свободного падения
-        self.water_resistance_coef = self.config['behavior']['water_resistance']  #коэффициент сопротивления воды
+        self.g = self.config['speeds']['gravity']  # ускорение свободного падения
+        self.water_resistance_coef = self.config['behavior']['water_resistance']  # коэффициент сопротивления воды
         self.color = color
         self.is_moving = True
         self.phase = 'falling'
@@ -23,6 +23,7 @@ class Ball:
 class Simulation:
     def __init__(self, config):
         self.config = config
+        self.is_paused = False
         self.width = config['width']
         self.height = config['height']
         self.water_level = self.height // 2
@@ -40,23 +41,23 @@ class Simulation:
             if not ball.is_moving:
                 continue
             current_bottom = ball.y + ball.r
-            if ball.phase == 'falling':#фаза падения в воздухе
+            if ball.phase == 'falling':  # фаза падения в воздухе
                 self.update_falling(ball, current_bottom)
-            elif ball.phase == 'water':#фаза падения в воде
+            elif ball.phase == 'water':  # фаза падения в воде
                 self.update_water(ball, current_bottom)
-            elif ball.phase == 'bounce1':#фаза отскока 1
+            elif ball.phase == 'bounce1':  # фаза отскока 1
                 self.update_bounce1(ball)
-            elif ball.phase == 'bounce2':#фаза отскока 2
+            elif ball.phase == 'bounce2':  # фаза отскока 2
                 self.update_bounce2(ball, current_bottom)
-            elif ball.phase == 'stopping':#остановка
+            elif ball.phase == 'stopping':  # остановка
                 self.update_stopping(ball)
 
     def update_falling(self, ball, current_bottom):
         if current_bottom < self.water_level:
-            #F = ma, ускорение постоянно
+            # F = ma, ускорение постоянно
             ball.a = ball.g
             ball.v += ball.a * self.config['speeds']['time_step']
-            ball.y += ball.v  #оновляем позицию шара с учетом новой скорости
+            ball.y += ball.v  # обновляем позицию шара с учетом новой скорости
         else:
             ball.phase = 'water'
 
@@ -64,48 +65,54 @@ class Simulation:
         if current_y < self.ground_level:
             ball.v += ball.g * 0.1
             if ball.r < 20:
-                water_resistance = ball.water_resistance_coef * ball.m * ball.r * self.water_density  #для маленьких шаров-полное сопротивление
+                water_resistance = ball.water_resistance_coef * ball.m * ball.r * self.water_density  # для маленьких шаров-полное сопротивление
             else:
-                water_resistance = ball.water_resistance_coef * ball.m * ball.r * self.water_density * 0.5  #для больших шаров-уменьшенное сопротивление (коэффициент 0.5)
+                water_resistance = ball.water_resistance_coef * ball.m * ball.r * self.water_density * 0.5  # для больших шаров-уменьшенное сопротивление (коэффициент 0.5)
             if ball.v > 0:
-                ball.v -= water_resistance * 0.001#обновление скорости с учетом сопротивления воды
+                ball.v -= water_resistance * 0.001  # обновление скорости с учетом сопротивления воды
             else:
                 ball.v += water_resistance * 0.005
             ball.y += ball.v
         else:
-            ball.y = self.ground_level - ball.r  #шар достиг дна-фиксируем позицию и переходим к фазе отскока
+            ball.y = self.ground_level - ball.r  # шар достиг дна-фиксируем позицию и переходим к фазе отскока
             ball.phase = 'bounce1'
 
     def update_bounce1(self, ball):
-        bounce_height = ball.m * 0.003 * self.config['behavior']['bounce_height']#вычисляем высоту отскока на основе массы шара
-        if ball.y > self.ground_level - ball.r - bounce_height:#проверяем, находится ли шар в фазе подъема после отскока
+        bounce_height = ball.m * 0.003 * self.config['behavior'][
+            'bounce_height']  # вычисляем высоту отскока на основе массы шара
+        if ball.y > self.ground_level - ball.r - bounce_height:  # проверяем, находится ли шар в фазе подъема после отскока
             ball.v = -ball.v * self.config['behavior']['bounce_coef'] * 0.5  # Коэффициент отскока
-            ball.y += ball.v#обновляем позицию шара с новой скоростью
+            ball.y += ball.v  # обновляем позицию шара с новой скоростью
         else:
-            ball.phase = 'bounce2'#шар достиг максимальной высоты отскока - переходим ко второй фазе
+            ball.phase = 'bounce2'  # шар достиг максимальной высоты отскока - переходим ко второй фазе
 
     def update_bounce2(self, ball, current_bottom):
-        if current_bottom < self.ground_level:#проверяем, не достиг ли шар дна после отскока
-            ball.v += ball.g * 0.05#добавляем гравитацию для ускорения падения
+        if current_bottom < self.ground_level:  # проверяем, не достиг ли шар дна после отскока
+            ball.v += ball.g * 0.05  # добавляем гравитацию для ускорения падения
             ball.y += ball.v
-        else: #шар снова достиг дна - фиксируем позицию и переходим к остановке
+        else:  # шар снова достиг дна - фиксируем позицию и переходим к остановке
             ball.y = self.ground_level - ball.r
             ball.phase = 'stopping'
 
-    def update_stopping(self, ball):#если шар еще не полностью опустился на дно
+    def update_stopping(self, ball):  # если шар еще не полностью опустился на дно
         if ball.y < self.ground_level - ball.r:
             ball.y += 0.1
         else:
-            ball.y = self.ground_level - ball.r#фиксируем шар точно на уровне дна
+            ball.y = self.ground_level - ball.r  # фиксируем шар точно на уровне дна
             ball.is_moving = False
+
+    def toggle_pause(self):
+        """Переключение режима паузы"""
+        self.is_paused = not self.is_paused
+        print(f"Пауза: {self.is_paused}")
 
     def all_balls_stopped(self):
         '''Проверяет, все ли шары остановили движение'''
-        return all(not ball.is_moving for ball in self.balls)#используем функцию all() для проверки, что у всех шаров
+        return all(not ball.is_moving for ball in self.balls)  # используем функцию all() для проверки, что у всех шаров
 
 
 class Graphics:
-    def __init__(self, root, simulation):#сохраняем ссылки на главное окно и симуляцию
+    def __init__(self, root, simulation):  # сохраняем ссылки на главное окно и симуляцию
         self.root = root
         self.simulation = simulation
         config = simulation.config
@@ -113,9 +120,10 @@ class Graphics:
         self.canv = tk.Canvas(root, width=config['width'], height=config['height'], bg=config['colors']['bg'])
         self.canv.pack()
         self.canv.create_rectangle(0, simulation.water_level, config['width'] + 2, config['height'] + 2,
-                                   fill=config['colors']['water'], activefill=config['colors']['water_activefill'])#рисуем воду
+                                   fill=config['colors']['water'],
+                                   activefill=config['colors']['water_activefill'])  #рисуем воду
         self.button_frame = tk.Frame(root)
-        self.button_frame.pack(pady=10)#отступ сверху и снизу
+        self.button_frame.pack(pady=10)  #отступ сверху и снизу
         dense_btn = tk.Button(self.button_frame, text='High density',
                               command=lambda: setattr(self.simulation, 'water_density', 3.0))
         dense_btn.pack(side=tk.LEFT, padx=5)
@@ -127,15 +135,18 @@ class Graphics:
         light_btn = tk.Button(self.button_frame, text='Low density',
                               command=lambda: setattr(self.simulation, 'water_density', 0.1))
         light_btn.pack(side=tk.LEFT, padx=5)
+        self.pause_btn = tk.Button(self.button_frame, text='⏸️ Пауза',
+                                   command=self.toggle_pause)
+        self.pause_btn.pack(side=tk.LEFT, padx=5)
 
-        self.ball_ids = []#список для хранения идентификаторов графических объектов шаров
+        self.ball_ids = []  #список для хранения идентификаторов графических объектов шаров
 
     def draw(self):
-        for ball_id in self.ball_ids:#удаляем предыдущие изображения шаров
+        for ball_id in self.ball_ids:  #удаляем предыдущие изображения шаров
             self.canv.delete(ball_id)
         self.ball_ids.clear()
 
-        for ball in self.simulation.balls:#рисуем шар из симуляции
+        for ball in self.simulation.balls:  #рисуем шар из симуляции
             x1 = ball.x - ball.r
             y1 = ball.y - ball.r
             x2 = ball.x + ball.r
@@ -144,16 +155,25 @@ class Graphics:
             ball_id = self.canv.create_oval(x1, y1, x2, y2, fill=ball.color,
                                             outline=self.simulation.config['colors']['oval_outline'],
                                             activefill=self.simulation.config['colors']['oval_activeclick'], width=2)
-            self.ball_ids.append(ball_id)#сохраняем идентификатор для последующего удаления
+
+            self.ball_ids.append(ball_id)  #сохраняем идентификатор для последующего удаления
+
+    def toggle_pause(self):
+        """Переключение паузы и обновление текста кнопки"""
+        self.simulation.toggle_pause()
+        if self.simulation.is_paused:
+            self.pause_btn.config(text='▶️ Продолжить')
+        else:
+            self.pause_btn.config(text='⏸️ Пауза')
 
 
 class Manager:
     def __init__(self):
         with open('config.json', 'r') as f:
             config = json.load(f)
-        self.root = tk.Tk()#создаем главное окно приложения
+        self.root = tk.Tk()  # создаем главное окно приложения
         self.root.title('Balls on the water')
-        self.simulation = Simulation(config) #создаем объект симуляции и графики
+        self.simulation = Simulation(config)  # создаем объект симуляции и графики
         self.graphics = Graphics(self.root, self.simulation)
 
         self.simulation.add_ball(20, 20, 10, 0.1, color='pink2')
@@ -162,26 +182,37 @@ class Manager:
         self.simulation.add_ball(350, 20, 10, 100, color='pink2')
         self.simulation.add_ball(100, 20, 30, 10, color='pink2')
         self.simulation.add_ball(370, 10, 50, 10, color='pink2')
-        self.root.bind('<Escape>', lambda e: self.escape())#привязываем клавишу Escape для выхода
-        self.running = True#флаг работы приложения
+        self.simulation.add_ball(230, 15, 15, 20, color='cornflowerblue')
+        self.root.bind('<Escape>', lambda e: self.escape())  #привязываем клавишу Escape для выхода
+        self.running = True  # флаг работы приложения
+        self.root.bind('<space>', lambda e: self.toggle_pause())
         self.game_loop()
 
+    def toggle_pause(self):
+        self.simulation.toggle_pause()
+
     def game_loop(self):
-        if self.running and not self.simulation.all_balls_stopped(): #продолжаем цикл пока приложение запущено и не все шары остановились
-            self.simulation.update()
+        # if self.running and not self.simulation.all_balls_stopped():  #продолжаем цикл пока приложение запущено и не все шары остановились
+        #     self.simulation.update()
+        #     self.graphics.draw()
+        #     self.root.after(1000 // self.simulation.config['speeds']['animation'],
+        #                     self.game_loop)  #планируем следующий кадр с учетом FPS из конфига
+        # elif not self.running:
+        #     self.root.destroy()
+        if self.running:
+            if not self.simulation.is_paused and not self.simulation.all_balls_stopped():
+                self.simulation.update()
             self.graphics.draw()
-            self.root.after(1000 // self.simulation.config['speeds']['animation'], self.game_loop)#планируем следующий кадр с учетом FPS из конфига
-        elif not self.running:
-            self.root.destroy()
+            self.root.after(1000 // self.simulation.config['speeds']['animation'], self.game_loop)
 
     def escape(self):
         self.running = False
-        self.root.destroy()#закрываем окно
+        self.root.destroy()  #закрываем окно
 
     def run(self):
-        self.root.mainloop()#запуск главного цикла приложения
+        self.root.mainloop()  #запуск главного цикла приложения
 
 
 if __name__ == '__main__':
-    manager = Manager() #создаем и запускаем менеджер приложения
+    manager = Manager()  #создаем и запускаем менеджер приложения
     manager.run()
